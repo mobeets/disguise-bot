@@ -3,16 +3,12 @@ import time
 import urllib
 from random import random
 from twython import Twython
-from model import update_image
+from face import update_image
 
-# CONSUMER_KEY = os.environ['TWITTER_CONSUMER_KEY']
-# CONSUMER_SECRET = os.environ['TWITTER_CONSUMER_SECRET']
-# OAUTH_TOKEN = os.environ['TWITTER_OAUTH_TOKEN']
-# OAUTH_TOKEN_SECRET = os.environ['TWITTER_OAUTH_TOKEN_SECRET']
-CONSUMER_KEY="07AQR8EwMu4tnN7eNrWlcCImg"
-CONSUMER_SECRET="RNaSs12y2nSVsu5fPWL7BBBuG8XOhtsU3ku13fZ9Kz3ubpJvSN"
-OAUTH_TOKEN="865566989087100930-GV6hLVrQCJGj7KCNuaiZIlFpbOjXzmT"
-OAUTH_TOKEN_SECRET="HG0D2MeU6g11hVbzz5lA665iZVlXbUsS0NBWG7Twe0r1u"
+CONSUMER_KEY = os.environ['TWITTER_CONSUMER_KEY']
+CONSUMER_SECRET = os.environ['TWITTER_CONSUMER_SECRET']
+OAUTH_TOKEN = os.environ['TWITTER_OAUTH_TOKEN']
+OAUTH_TOKEN_SECRET = os.environ['TWITTER_OAUTH_TOKEN_SECRET']
 
 TWEET_LENGTH = 140
 TWEET_URL_LENGTH = 21
@@ -37,18 +33,22 @@ def get_image_in_tweet(tweet):
     try:
         url = tweet['entities']['media'][0]['media_url']
         name, headers = urllib.urlretrieve(url)
-        return name
+        return name, url
     except:
-        return None
+        return None, None
 
-def reply_with_image(tweet, infile, handle):
+def reply_with_image(tweet, infile, url, handle):
     # reply to tweet with the processed image
     message = '@' + tweet['user']['screen_name']
-    image = update_image(infile)
-    image_ids = handle.upload_media(media=image)
-    handle.update_status(status=message,
-        media_ids=image_ids['media_id'],
-        in_reply_to_status_id=tweet['id'])
+    # image = update_image(infile)
+    outfile = update_image(infile, url)
+    if outfile is not None:
+        image_ids = handle.upload_media(media=open(outfile))
+        handle.update_status(status=message,
+            media_ids=image_ids['media_id'],
+            in_reply_to_status_id=tweet['id'])
+    else:
+        print 'Ignoring tweet with no faces in image'
 
 def get_mentions(handle):
     # returns iterator of tweets mentioning us
@@ -60,12 +60,15 @@ def main():
         for tweet in get_mentions(handle):
             time.sleep(RUN_EVERY_N_SECONDS)
             if already_replied(tweet, handle):
+                print 'Ignoring tweet because I already replied.'
                 continue
-            infile = get_image_in_tweet(tweet)
+            infile, url = get_image_in_tweet(tweet)
             if infile:
                 print "Replying to tweet id {}...".format(tweet['id'])
-                reply_with_image(tweet, infile, handle)
+                reply_with_image(tweet, infile, url, handle)
                 favorite_tweet(tweet, handle) # to mark as replied
+            else:
+                print 'Ignoring tweet without image'
 
 if __name__ == '__main__':
     main()

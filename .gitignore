@@ -3,5 +3,4 @@
 *.pyc
 *.ipynb
 .ipynb_checkpoints/
-data/
 kairos-face-sdk-python/
