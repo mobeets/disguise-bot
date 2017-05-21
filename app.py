@@ -90,7 +90,7 @@ MAX_SKIPS = 20 # if no tweets in a while, tweet something random
 def main():
     handle = twitter_handle()
     tweets_seen = []
-    time.sleep(RUN_EVERY_N_SECONDS)
+    # time.sleep(RUN_EVERY_N_SECONDS)
     tweets_seen.append(tweet_random_image(handle, tweets_seen))
     while True:
         i = 0
