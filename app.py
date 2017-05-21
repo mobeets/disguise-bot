@@ -65,6 +65,9 @@ def tweet_random_image(handle):
     if infile is None:
         return
     outfile = update_image(infile, url)
+    if outfile is None:
+        print 'Ignoring tweet with no faces in image'
+        return
     image_ids = handle.upload_media(media=open(outfile))
     message = ' '
     handle.update_status(status=message,
