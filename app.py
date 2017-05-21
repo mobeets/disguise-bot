@@ -85,8 +85,8 @@ def tweet_random_image(handle, tweets_seen):
     favorite_tweet(tweet, handle)
     return tweet
 
-RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
-MAX_SKIPS = 60 # if no tweets in a while, tweet something random
+RUN_EVERY_N_SECONDS = 60*5 # e.g. 60*5 = tweets every five minutes
+MAX_SKIPS = 20 # if no tweets in a while, tweet something random
 def main():
     handle = twitter_handle()
     tweets_seen = []
