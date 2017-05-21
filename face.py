@@ -12,7 +12,6 @@ import kairos_face # https://github.com/ffmmjj/kairos-face-sdk-python
 
 # https://www.kairos.com/docs/api/v1/
 # https://www.kairos.com/docs/api/#post-enroll
-print os.environ
 kairos_face.settings.app_id = os.environ['KAIROS_APP_ID']
 kairos_face.settings.app_key = os.environ['KAIROS_APP_KEY']
 
@@ -77,7 +76,8 @@ class Eyes(Sketch):
 def detect_faces(url):
     try:
         faces = kairos_face.detect_face(url=url)
-    except:
+    except Exception, e:
+        print str(e)
         return None
     if type(faces) is dict and 'images' in faces:
         faces = faces['images']
@@ -144,6 +144,8 @@ def test1():
     import urllib
     # url = 'http://pbs.twimg.com/media/DAMpysCUMAE3SlL.jpg'
     url = 'https://scontent.fphl2-1.fna.fbcdn.net/v/t1.0-9/553988_3811036804045_1886663415_n.jpg?oh=c117d5b58989aec57e95cb797f7e2f2d&oe=59A39B93'
+    url = 'https://pbs.twimg.com/media/DAUQ5CXVoAAgtH_.jpg:large'
+    url = 'https://pbs.twimg.com/media/DAUXgDHUwAU-S3U.jpg'
     infile, _ = urllib.urlretrieve(url)
     outfile = update_image(infile, url)
     img = io.imread(outfile)

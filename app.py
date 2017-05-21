@@ -53,45 +53,52 @@ def get_mentions(handle):
     # returns iterator of tweets mentioning us
     return handle.cursor(handle.get_mentions_timeline, include_entities=True)
 
-def find_random_tweet_with_image(handle, max_tries=10):
+def find_random_tweet_with_image(handle, tweets_seen, max_tries=10):
     i = 0
     for tweet in handle.cursor(handle.search, q='photo', result_type='popular', include_entities=True):
         infile, url = get_image_in_tweet(tweet)
-        if infile is not None and not already_replied(tweet, handle):
+        if infile is not None and not already_replied(tweet, handle) and tweet['id'] not in tweets_seen:
             return infile, url, tweet
         i += 1
         if i > max_tries:
             return None, None, None
 
-def tweet_random_image(handle):
-    infile, url, tweet = find_random_tweet_with_image(handle)
+def tweet_random_image(handle, tweets_seen):
+    infile, url, tweet = find_random_tweet_with_image(handle, tweets_seen)
     if infile is None:
-        return
+        return tweet
     outfile = update_image(infile, url)
     if outfile is None:
-        print 'Ignoring tweet with no faces in image'
-        return
+        print 'Ignoring tweet {} with no faces in image'.format(tweet['id'])
+        return tweet
     image_ids = handle.upload_media(media=open(outfile))
     message = ' '
     handle.update_status(status=message,
         media_ids=image_ids['media_id'])
     favorite_tweet(tweet, handle)
+    return tweet
 
 RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
 MAX_SKIPS = 30 # if no tweets in a while, tweet something random
 def main():
     handle = twitter_handle()
-    tweet_random_image(handle)
+    tweets_seen = []
+    tweets_seen.append(tweet_random_image(handle, tweets_seen))
     while True:
         i = 0        
         for tweet in get_mentions(handle):
             time.sleep(RUN_EVERY_N_SECONDS)
+            if tweet['id'] in tweets_seen:
+                print 'Seen tweet {} already.'.format(tweet['id'])
+                continue
             if already_replied(tweet, handle):
                 print 'Ignoring tweet {} because I already replied.'.format(tweet['id'])
-                # might break once I reach this point, since it probably means I've reached the most recent ones
+                tweets_seen.append(tweet['id'])
+                # maybe I should break once I reach this point, since it probably means I've reached the most recent ones?
                 i += 1
                 if i > MAX_SKIPS:
-                    tweet_random_image(handle)
+                    tweets_seen.append(tweet_random_image(handle, tweets_seen))
+                    i = 0
                 continue
             i = 0
             infile, url = get_image_in_tweet(tweet)
@@ -102,6 +109,7 @@ def main():
                 # handle.create_friendship(screen_name=tweet['user']['screen_name'])
             else:
                 print 'Ignoring tweet {} without image'.format(tweet['id'])
+            tweets_seen.append(tweet['id'])
 
 if __name__ == '__main__':
     main()
