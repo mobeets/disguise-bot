@@ -52,16 +52,16 @@ def get_mentions(handle):
 
 def find_random_tweet_with_image(handle, max_tries=10):
     i = 0
-    for tweet in handle.cursor(handle.search, q='me', result_type='popular', include_entities=True):
+    for tweet in handle.cursor(handle.search, q='photo', result_type='popular', include_entities=True):
         infile, url = get_image_in_tweet(tweet)
         if infile is not None and not already_replied(tweet, handle):
-            return infile, url
+            return infile, url, tweet
         i += 1
         if i > max_tries:
-            return None, None
+            return None, None, None
 
 def tweet_random_image(handle):
-    infile, url = find_random_tweet_with_image(handle)
+    infile, url, tweet = find_random_tweet_with_image(handle)
     if infile is None:
         return
     outfile = update_image(infile, url)
@@ -72,6 +72,7 @@ def tweet_random_image(handle):
     message = ' '
     handle.update_status(status=message,
         media_ids=image_ids['media_id'])
+    favorite_tweet(tweet, handle)
 
 RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
 MAX_SKIPS = 30 # if no tweets in a while, tweet something random
@@ -83,7 +84,8 @@ def main():
         for tweet in get_mentions(handle):
             time.sleep(RUN_EVERY_N_SECONDS)
             if already_replied(tweet, handle):
-                print 'Ignoring tweet because I already replied.'
+                print 'Ignoring tweet {} because I already replied.'.format(tweet['id'])
+                # might break once I reach this point, since it probably means I've reached the most recent ones
                 i += 1
                 if i > MAX_SKIPS:
                     tweet_random_image(handle)
@@ -91,11 +93,11 @@ def main():
             i = 0
             infile, url = get_image_in_tweet(tweet)
             if infile:
-                print "Replying to tweet id {}...".format(tweet['id'])
+                print "Replying to tweet {}...".format(tweet['id'])
                 reply_with_image(tweet, infile, url, handle)
                 favorite_tweet(tweet, handle) # to mark as replied
             else:
-                print 'Ignoring tweet without image'
+                print 'Ignoring tweet {} without image'.format(tweet['id'])
 
 if __name__ == '__main__':
     main()
