@@ -12,6 +12,7 @@ import kairos_face # https://github.com/ffmmjj/kairos-face-sdk-python
 
 # https://www.kairos.com/docs/api/v1/
 # https://www.kairos.com/docs/api/#post-enroll
+print os.environ
 kairos_face.settings.app_id = os.environ['KAIROS_APP_ID']
 kairos_face.settings.app_key = os.environ['KAIROS_APP_KEY']
 

@@ -50,15 +50,42 @@ def get_mentions(handle):
     # returns iterator of tweets mentioning us
     return handle.cursor(handle.get_mentions_timeline, include_entities=True)
 
+def find_random_tweet_with_image(handle, max_tries=10):
+    i = 0
+    for tweet in twitter.cursor(twitter.search, q='me', result_type='popular', include_entities=True):
+        infile, url = get_image_in_tweet(tweet)
+        if infile is not None and not already_replied(tweet, handle):
+            return infile, url
+        i += 1
+        if i > max_tries:
+            return None, None
+
+def tweet_random_image(handle):
+    infile, url = find_random_tweet_with_image(handle)
+    if infile is None:
+        return
+    outfile = update_image(infile, url)
+    image_ids = handle.upload_media(media=open(outfile))
+    message = ' '
+    handle.update_status(status=message,
+        media_ids=image_ids['media_id'])
+
 RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
+MAX_SKIPS = 30 # if no tweets in a while, tweet something random
 def main():
     handle = twitter_handle()
+    tweet_random_image(handle)
     while True:
+        i = 0        
         for tweet in get_mentions(handle):
             time.sleep(RUN_EVERY_N_SECONDS)
             if already_replied(tweet, handle):
                 print 'Ignoring tweet because I already replied.'
+                i += 1
+                if i > MAX_SKIPS:
+                    tweet_random_image(handle)
                 continue
+            i = 0
             infile, url = get_image_in_tweet(tweet)
             if infile:
                 print "Replying to tweet id {}...".format(tweet['id'])
