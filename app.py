@@ -14,7 +14,10 @@ def twitter_handle():
     return Twython(CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 
 def favorite_tweet(tweet, handle):
-    handle.create_favorite(id=tweet['id'])
+    try:
+        handle.create_favorite(id=tweet['id'])
+    except:
+        return
 
 def already_replied(tweet, handle):
     # if we favorited this tweet already, then we've replied
