@@ -63,11 +63,12 @@ def find_random_tweet_with_image(handle, tweets_seen, max_tries=2):
     for tweet in handle.cursor(handle.search, q='photo', result_type='popular', include_entities=True):
         infile, url = get_image_in_tweet(tweet)
         if infile is None or already_replied(tweet, handle) or tweet['id'] in tweets_seen:
-                i += 1
-                if i > max_tries:
-                    return None, None, None
-                continue
-            return infile, url, tweet
+            i += 1
+            if i > max_tries:
+                return None, None, None
+            continue
+        return infile, url, tweet
+    return None, None, None
 
 def tweet_random_image(handle, tweets_seen):
     infile, url, tweet = find_random_tweet_with_image(handle, tweets_seen)
