@@ -44,6 +44,9 @@ def reply_with_image(tweet, infile, url, handle):
             media_ids=image_ids['media_id'],
             in_reply_to_status_id=tweet['id'])
     else:
+        message = "Sorry, I couldn't find a face in that image. " + message
+        handle.update_status(status=message,
+            in_reply_to_status_id=tweet['id'])
         print 'Ignoring tweet with no faces in image'
 
 def get_mentions(handle):
@@ -96,6 +99,7 @@ def main():
                 print "Replying to tweet {}...".format(tweet['id'])
                 reply_with_image(tweet, infile, url, handle)
                 favorite_tweet(tweet, handle) # to mark as replied
+                # handle.create_friendship(screen_name=tweet['user']['screen_name'])
             else:
                 print 'Ignoring tweet {} without image'.format(tweet['id'])
 

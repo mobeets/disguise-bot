@@ -98,6 +98,7 @@ def load_sketch(globfile):
 
 def draw_on_face(infile, faces, data, outfile=None):
     image = io.imread(infile)
+    plt.close('all')
     fig = plt.imshow(image, cmap=plt.cm.gray)
     for face in faces:
         print '.'
