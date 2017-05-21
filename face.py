@@ -3,6 +3,8 @@ import tempfile
 import numpy as np
 from skimage import io
 from skimage.transform import rescale, rotate
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import kairos_face # https://github.com/ffmmjj/kairos-face-sdk-python
