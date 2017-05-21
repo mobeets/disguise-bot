@@ -75,7 +75,10 @@ class Eyes(Sketch):
         self.linewidth = 1
 
 def detect_faces(url):
-    faces = kairos_face.detect_face(url=url)
+    try:
+        faces = kairos_face.detect_face(url=url)
+    except:
+        return None
     if type(faces) is dict and 'images' in faces:
         faces = faces['images']
     if len(faces) > 0:
