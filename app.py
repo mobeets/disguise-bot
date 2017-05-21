@@ -49,9 +49,16 @@ def reply_with_image(tweet, infile, url, handle):
             in_reply_to_status_id=tweet['id'])
         print 'Ignoring tweet with no faces in image'
 
+def get_start_id(handle):
+    xs = handle.get_favorites()
+    if not xs:
+        return None
+    return xs[0]['id']
+
 def get_mentions(handle):
     # returns iterator of tweets mentioning us
-    return handle.cursor(handle.get_mentions_timeline, include_entities=True)
+    start_id = get_start_id(handle)
+    return handle.cursor(handle.get_mentions_timeline, include_entities=True, since_id=start_id)
 
 def find_random_tweet_with_image(handle, tweets_seen, max_tries=10):
     i = 0
@@ -79,17 +86,21 @@ def tweet_random_image(handle, tweets_seen):
     return tweet
 
 RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
-MAX_SKIPS = 30 # if no tweets in a while, tweet something random
+MAX_SKIPS = 60 # if no tweets in a while, tweet something random
 def main():
     handle = twitter_handle()
     tweets_seen = []
     tweets_seen.append(tweet_random_image(handle, tweets_seen))
     while True:
-        i = 0        
+        i = 0
         for tweet in get_mentions(handle):
             time.sleep(RUN_EVERY_N_SECONDS)
             if tweet['id'] in tweets_seen:
                 print 'Seen tweet {} already.'.format(tweet['id'])
+                i += 1
+                if i > MAX_SKIPS:
+                    tweets_seen.append(tweet_random_image(handle, tweets_seen))
+                    i = 0
                 continue
             if already_replied(tweet, handle):
                 print 'Ignoring tweet {} because I already replied.'.format(tweet['id'])
