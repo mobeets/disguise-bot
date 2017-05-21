@@ -4,6 +4,7 @@ import numpy as np
 from skimage import io
 from skimage.transform import rescale, rotate
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import kairos_face # https://github.com/ffmmjj/kairos-face-sdk-python
 kairos_face.settings.app_id = "04803c1e"
 kairos_face.settings.app_key = "e1177afcd324c68c8adb14034aca836a"
@@ -29,8 +30,8 @@ class Sketch:
         return np.dot(sketch, np.array(R))
 
     def get_pts(self, sketch):
-        sketch = rescale(sketch, 2*self.scale)
-        if len(sketch.shape) > 2:
+        sketch = rescale(sketch, 1.5*self.scale)
+        if True:#len(sketch.shape) > 2:
             sketch = rotate(sketch, -90-self.rot)
             return sketch
         pts = np.vstack(np.where(sketch <= 0.01)).T
@@ -44,9 +45,12 @@ class Sketch:
         return [pts + c for c in self.centers]
 
     def draw(self):
-        if len(self.sketch.shape) > 2:
+        if True:#len(self.sketch.shape) > 2:
             for cent in self.centers:
-                im = plt.imshow(self.pts)
+                im = OffsetImage(self.pts, zoom=1)
+                ab = AnnotationBbox(im, (cent[0], cent[1]),
+                        xycoords='data', frameon=False)
+                plt.gca().add_artist(ab)
         else:
             for pts in self.pts:
                 plt.scatter(pts[:,0], pts[:,1], c='k', s=1)
@@ -60,44 +64,15 @@ class Moustache(Sketch):
         chin = (face['chinTipX'], face['chinTipY'])
         self.centers = [np.median(np.array([eyecent.tolist(), chin]), axis=0)]
         self.rot = face['roll']
-        self.scale = face['eyeDistance']/100.
-        self.linewidth = 1
-
-class Nose(Sketch):
-    def locate(self, face):
-        # median of eye center and chin tip
-        leye = (face['leftEyeCenterX'], face['leftEyeCenterY'])
-        reye = (face['rightEyeCenterX'], face['rightEyeCenterY'])
-        eyecent = np.median(np.array([leye, reye]), axis=0)
-        chin = (face['chinTipX'], face['chinTipY'])
-        self.centers = [np.median(np.array([eyecent.tolist(), chin]), axis=0)]
-        # self.centers = [eyecent]
-        self.rot = face['roll']
-        self.scale = face['eyeDistance']/100.
-        self.linewidth = 1
-        self.doCenter = False
-
-class Glasses(Sketch):
-    def locate(self, face):
-        leye = (face['leftEyeCenterX'], face['leftEyeCenterY'])
-        self.centers = [np.median(np.array([leye, reye]), axis=0)]
-        self.rot = face['roll']
-        self.scale = 0.5
-        self.linewidth = 1
-
-class Bird(Sketch):
-    def locate(self, face):
-        self.centers = [(face['topLeftX'], face['topLeftY'])]
-        self.rot = face['roll']
-        self.scale = face['eyeDistance']/120.
+        self.scale = face['eyeDistance']/150.
         self.linewidth = 1
 
 class Hat(Sketch):
     def locate(self, face):
         ltop = (face['topLeftX'], face['topLeftY'])
-        self.centers = [(face['topLeftX'] + face['width']/2, face['topLeftY'] - face['height']/5)]
+        self.centers = [(face['topLeftX'] + face['width']/2, face['topLeftY'] - face['height']/2)]
         self.rot = face['roll']
-        self.scale = face['eyeDistance']/80.
+        self.scale = face['eyeDistance']/70.
         self.linewidth = 1
         self.doCenter = False
 
@@ -105,7 +80,7 @@ class Eyes(Sketch):
     def locate(self, face):
         self.centers = [(face['leftEyeCenterX'], face['leftEyeCenterY']), (face['rightEyeCenterX'], face['rightEyeCenterY'])]
         self.rot = face['roll']
-        self.scale = face['eyeDistance']/200.
+        self.scale = face['eyeDistance']/250.
         self.linewidth = 1
 
 def detect_faces(url):
@@ -121,9 +96,14 @@ def load_sketch(globfile):
     img = io.imread(infile)
     img = rescale(img, 0.8)
     img = rotate(img, 90)
-    img = img.round()
-    if len(img.shape) == 3:
-        img = (1-img[:,:,-1].round())
+    # img = img.round()
+    # if len(img.shape) == 3:
+    #     img = (1-img[:,:,-1].round())
+
+    if len(img.shape) == 2:
+        img = np.tile(img[:,:,None], 4)
+        img[:,:,-1] = 0
+        img[img[:,:,0] <= 0.1,-1] = 1
     return img
 
 def draw_on_face(infile, faces, data, outfile=None):
@@ -153,26 +133,29 @@ def update_image(infile, url):
     draw_on_face(infile, faces, data, outfile)
     return outfile
 
-def test():
+def test0():
     data = [('data/moustaches/*.png', Moustache), ('data/hats/*.png', Hat), ('data/eyes/*.png', Eyes)]
-    # data = [('data/eyes/4.png', Eyes)]
-    # data = [('data/moustache.npz', Moustache), ('data/hat.npz', Hat), 
+    # data = [('data/eyes/*.png', Eyes)]
         # ('data/eye.npz', Eyes)]
     url = 'http://pbs.twimg.com/media/DAMpysCUMAE3SlL.jpg'
     url = 'https://scontent.fphl2-1.fna.fbcdn.net/v/t1.0-9/553988_3811036804045_1886663415_n.jpg?oh=c117d5b58989aec57e95cb797f7e2f2d&oe=59A39B93'
-    url = 'https://scontent.fphl2-1.fna.fbcdn.net/v/t1.0-9/207146_1003361253911_9728_n.jpg?oh=77696385c0ed2002eb50f1c32bfd67f2&oe=59AB05A4'
-    # faces = detect_faces(url)
+    # url = 'https://scontent.fphl2-1.fna.fbcdn.net/v/t1.0-9/207146_1003361253911_9728_n.jpg?oh=77696385c0ed2002eb50f1c32bfd67f2&oe=59AB05A4'
+    faces = detect_faces(url)
 
     import cPickle
-    # cPickle.dump(faces, open('data/tmp3.pickle', 'w'))
+    cPickle.dump(faces, open('data/tmp.pickle', 'w'))
+    # faces = cPickle.load(open('data/tmp.pickle'))  
     infile = 'data/example.jpg'
-    faces = cPickle.load(open('data/tmp.pickle'))  
     draw_on_face(infile, faces, data)#, outfile='data/tmp.png')
     
-if __name__ == '__main__':
+def test1():
     infile = 'data/example.jpg'
-    url = 'http://pbs.twimg.com/media/DAMpysCUMAE3SlL.jpg'
+    # url = 'http://pbs.twimg.com/media/DAMpysCUMAE3SlL.jpg'
+    url = 'https://scontent.fphl2-1.fna.fbcdn.net/v/t1.0-9/553988_3811036804045_1886663415_n.jpg?oh=c117d5b58989aec57e95cb797f7e2f2d&oe=59A39B93'
     outfile = update_image(infile, url)
     img = io.imread(outfile)
     plt.imshow(img)
     plt.show()
+
+if __name__ == '__main__':
+    test1()
