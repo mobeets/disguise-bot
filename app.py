@@ -52,7 +52,7 @@ def get_mentions(handle):
 
 def find_random_tweet_with_image(handle, max_tries=10):
     i = 0
-    for tweet in twitter.cursor(twitter.search, q='me', result_type='popular', include_entities=True):
+    for tweet in handle.cursor(handle.search, q='me', result_type='popular', include_entities=True):
         infile, url = get_image_in_tweet(tweet)
         if infile is not None and not already_replied(tweet, handle):
             return infile, url
