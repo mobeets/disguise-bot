@@ -1,3 +1,4 @@
+import os
 import glob
 import tempfile
 import numpy as np
@@ -8,10 +9,11 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from skimage import io
 from skimage.transform import rescale, rotate
 import kairos_face # https://github.com/ffmmjj/kairos-face-sdk-python
-kairos_face.settings.app_id = "04803c1e"
-kairos_face.settings.app_key = "e1177afcd324c68c8adb14034aca836a"
+
 # https://www.kairos.com/docs/api/v1/
 # https://www.kairos.com/docs/api/#post-enroll
+kairos_face.settings.app_id = os.environ['KAIROS_APP_ID']
+kairos_face.settings.app_key = os.environ['KAIROS_APP_KEY']
 
 class Sketch:
     def __init__(self, face=None, sketch=None):
