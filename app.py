@@ -10,10 +10,6 @@ CONSUMER_SECRET = os.environ['TWITTER_CONSUMER_SECRET']
 OAUTH_TOKEN = os.environ['TWITTER_OAUTH_TOKEN']
 OAUTH_TOKEN_SECRET = os.environ['TWITTER_OAUTH_TOKEN_SECRET']
 
-TWEET_LENGTH = 140
-TWEET_URL_LENGTH = 21
-RUN_EVERY_N_SECONDS = 60*60 # e.g. 60*5 = tweets every five minutes
-
 def twitter_handle():
     return Twython(CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 
@@ -54,6 +50,7 @@ def get_mentions(handle):
     # returns iterator of tweets mentioning us
     return handle.cursor(handle.get_mentions_timeline, include_entities=True)
 
+RUN_EVERY_N_SECONDS = 60*1 # e.g. 60*5 = tweets every five minutes
 def main():
     handle = twitter_handle()
     while True:
