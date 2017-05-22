@@ -53,7 +53,7 @@ def reply_with_image(tweet, infile, url, handle):
         print 'Ignoring tweet with no faces in image'
 
 def get_start_id(handle):
-    xs = handle.get_favorites()
+    xs = handle.get_favorites(count=1)
     if not xs:
         return None
     return xs[0]['id']
@@ -92,8 +92,8 @@ def main():
     tweets_seen = []
     while True:
         i = 0
-        start_id = get_start_id(handle)
-        for tweet in handle.cursor(handle.get_mentions_timeline, include_entities=True, since_id=start_id):
+        # start_id = get_start_id(handle)
+        for tweet in handle.cursor(handle.get_mentions_timeline, include_entities=True):
             time.sleep(RUN_EVERY_N_SECONDS)
             if tweet['id'] in tweets_seen or already_replied(tweet, handle):
                 print 'Seen tweet {} already.'.format(tweet['id'])
